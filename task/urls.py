@@ -18,12 +18,14 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 #from app
-from social_media.views import FeedViewSet
+from social_media.views import FeedViewSet,LikeViewSet
 
 
 
 router = DefaultRouter()
-router.register('feed', FeedViewSet)
+# router.register('feed', FeedViewSet)
+router.register('feed', FeedViewSet,basename='feed')
+router.register('like', LikeViewSet,basename='like')
 
 
 

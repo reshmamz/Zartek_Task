@@ -1,5 +1,9 @@
 from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer
 from django.utils import timezone
+from .models import Like,Feed,Image,Tag
+from django.contrib.auth.models import User
+
 
 class TagSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=50)
@@ -8,28 +12,50 @@ class TagSerializer(serializers.Serializer):
 class FeedSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=50)
     description = serializers.CharField(max_length = 200)
-    # tag = serializers.ManyToManyField('Tag')
+    tag = serializers.StringRelatedField(many=True)
     created = serializers.DateTimeField(default=timezone.now)
+    image = serializers.SerializerMethodField('get_image')
+    # like = serializers.SerializerMethodField('get_like')
+    like_count = serializers.SerializerMethodField('get_like_count')
+    dislike_count = serializers.SerializerMethodField('get_dislike_count')
+
+    def get_image(self,obj):
+        data = Image.objects.filter(feed=obj.id)
+        serializer = ImageSerializer(data,many=True)
+        return serializer.data
+
+    def get_like_count(self,obj):
+        like_count = Like.objects.filter(feed=obj.id,like=1).count()
+        return like_count
+
+    def get_dislike_count(self,obj):
+        dislike_count = Like.objects.filter(feed=obj.id,like=0).count()
+        return dislike_count
+
+    # def get_like(self,obj):
+    #
+    #     data = Like.objects.filter(feed=obj.id,user=1)
+    #     serializer = LikesSerializer(data,many=True)
+    #     print('lllllllllllllllllllllllllllllllllll')
+    #     print(obj.id)
+    #     print(serializer.data)
+    #     pass
 
 class ImageSerializer(serializers.Serializer):
-    image = serializers.ImageField(max_length=None, allow_empty_file=False, use_url='task\image')
-    feed = FeedSerializer()
+    image = serializers.ImageField(use_url=True)
+    # feed = serializers.PrimaryKeyRelatedField(queryset=Feed.objects.all())
 
-class LikeSerializer(serializers.Serializer):
-    feed = FeedSerializer()
-    # user = serializers.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True)
+class LikesSerializer(serializers.Serializer):
+    feed = serializers.PrimaryKeyRelatedField(queryset=Feed.objects.all())
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     like = serializers.BooleanField()
 
-class FeedListSerializer(serializers.Serializer):
-    name = serializers.CharField(max_length=50)
-    image = ImageSerializer()
-    tag = TagSerializer()
-    created = serializers.DateTimeField(default=timezone.now)
+    def create(self, validated_data):
+        return Like.objects.create(**validated_data)
 
-    # def validate(self, data):
-    #     """
-    #     Check that start is before finish.
-    #     """
-    #     if data['start'] > data['finish']:
-    #         raise serializers.ValidationError("finish must occur after start")
-    #     return data
+    def update(self, instance, validated_data):
+        instance.feed = validated_data.get('feed', instance.feed)
+        instance.user = validated_data.get('user', instance.user)
+        instance.like = validated_data.get('like', instance.like)
+        instance.save()
+        return instance
