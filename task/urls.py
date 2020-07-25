@@ -23,7 +23,6 @@ from social_media.views import FeedViewSet,LikeViewSet
 
 
 router = DefaultRouter()
-# router.register('feed', FeedViewSet)
 router.register('feed', FeedViewSet,basename='feed')
 router.register('like', LikeViewSet,basename='like')
 

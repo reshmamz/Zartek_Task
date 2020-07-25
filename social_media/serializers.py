@@ -15,7 +15,7 @@ class FeedSerializer(serializers.Serializer):
     tag = serializers.StringRelatedField(many=True)
     created = serializers.DateTimeField(default=timezone.now)
     image = serializers.SerializerMethodField('get_image')
-    # like = serializers.SerializerMethodField('get_like')
+    like = serializers.SerializerMethodField('get_like')
     like_count = serializers.SerializerMethodField('get_like_count')
     dislike_count = serializers.SerializerMethodField('get_dislike_count')
 
@@ -32,18 +32,13 @@ class FeedSerializer(serializers.Serializer):
         dislike_count = Like.objects.filter(feed=obj.id,like=0).count()
         return dislike_count
 
-    # def get_like(self,obj):
-    #
-    #     data = Like.objects.filter(feed=obj.id,user=1)
-    #     serializer = LikesSerializer(data,many=True)
-    #     print('lllllllllllllllllllllllllllllllllll')
-    #     print(obj.id)
-    #     print(serializer.data)
-    #     pass
+    def get_like(self,obj):
+        data = Like.objects.filter(feed=obj.id,user=1)
+        serializer = LikesSerializer(data,many=True)
+        return serializer.data
 
 class ImageSerializer(serializers.Serializer):
     image = serializers.ImageField(use_url=True)
-    # feed = serializers.PrimaryKeyRelatedField(queryset=Feed.objects.all())
 
 class LikesSerializer(serializers.Serializer):
     feed = serializers.PrimaryKeyRelatedField(queryset=Feed.objects.all())
